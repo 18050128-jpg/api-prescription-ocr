@@ -73,3 +73,39 @@ def test_login_accepts_form_payload():
     assert response.status_code == 200, response.text
     payload = response.json()
     assert "access_token" in payload
+
+
+def test_change_password_with_token():
+    username = "web_change_password_user"
+    old_password = "WebOldPassword123"
+    new_password = "WebNewPassword456"
+
+    register_response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": username,
+            "email": "webchangepassword@example.com",
+            "password": old_password,
+            "full_name": "Change Password User",
+        },
+    )
+
+    assert register_response.status_code == 201, register_response.text
+
+    token = register_response.json()["access_token"]
+
+    response = client.put(
+        "/api/v1/auth/change-password",
+        json={"current_password": old_password, "new_password": new_password},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["message"] == "Mat khau da duoc cap nhat."
+
+    login_response = client.post(
+        "/api/v1/auth/login",
+        json={"username": username, "password": new_password},
+    )
+
+    assert login_response.status_code == 200, login_response.text

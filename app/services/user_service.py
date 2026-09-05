@@ -102,6 +102,42 @@ def reset_user_password(user_id: str, password: str) -> UserResponse:
 	return UserResponse.model_validate(user)
 
 
+def change_password_for_user(user_id: str, current_password: str, new_password: str) -> None:
+	users = _read_users()
+	user = next((item for item in users if item.get("id") == user_id), None)
+	if not user:
+		raise KeyError("Khong tim thay nguoi dung.")
+	if not _verify_password(current_password, user.get("password_hash", "")):
+		raise ValueError("Mat khau hien tai khong dung.")
+	if len(new_password.strip()) < 8:
+		raise ValueError("Mat khau moi phai co it nhat 8 ky tu.")
+	user["password_hash"] = _hash_password(new_password)
+	user["updated_at"] = datetime.now(timezone.utc).isoformat()
+	_write_users(users)
+
+
+def reset_password_by_identity(username: str, email: str, new_password: str) -> None:
+	users = _read_users()
+	normalized_username = username.strip().lower()
+	normalized_email = email.strip().lower()
+	user = next(
+		(
+			item
+			for item in users
+			if item.get("username", "").lower() == normalized_username
+			and item.get("email", "").lower() == normalized_email
+		),
+		none,
+	)
+	if not user:
+		raise ValueError("Username hoac email khong dung.")
+	if len(new_password.strip()) < 8:
+		raise ValueError("Mat khau moi phai co it nhat 8 ky tu.")
+	user["password_hash"] = _hash_password(new_password)
+	user["updated_at"] = datetime.now(timezone.utc).isoformat()
+	_write_users(users)
+
+
 def delete_user(user_id: str) -> None:
 	users = _read_users()
 	remaining_users = [user for user in users if user.get("id") != user_id]

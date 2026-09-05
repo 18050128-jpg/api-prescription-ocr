@@ -74,6 +74,8 @@ Role hiện có: `user`, `doctor`, `admin`.
 | `POST` | `/api/v1/auth/login` | Public | Đăng nhập; nhận JSON hoặc form |
 | `POST` | `/api/v1/auth/register` | Public | Tạo tài khoản |
 | `POST` | `/api/v1/auth/bootstrap` | Public | Tạo admin đầu tiên |
+| `POST` | `/api/v1/auth/reset-password` | Public | Đặt lại mật khẩu bằng username và email |
+| `PUT` | `/api/v1/auth/change-password` | Đã đăng nhập | Đổi mật khẩu bằng mật khẩu hiện tại |
 | `POST` | `/api/v1/prescriptions/ocr` | `user`, `doctor` | Upload ảnh với multipart field `file` |
 | `GET` | `/api/v1/prescriptions` | `user`, `doctor` | Lấy danh sách bản ghi đơn thuốc |
 | `POST` | `/api/v1/prescriptions/{id}/medicines/{index}/use` | `user`, `doctor` | Giảm số lượng thuốc đã dùng |

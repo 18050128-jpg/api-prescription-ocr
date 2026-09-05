@@ -1,8 +1,17 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from typing import Any
 
-from app.schemas.auth import LoginRequest, TokenResponse
+from app.api.dependencies import get_current_user
+from app.schemas.auth import ChangePasswordRequest, LoginRequest, ResetPasswordRequest, TokenResponse
 from app.schemas.user import UserCreate, UserResponse
-from app.services.user_service import authenticate_user, create_user, issue_token, list_users
+from app.services.user_service import (
+	authenticate_user,
+	change_password_for_user,
+	create_user,
+	issue_token,
+	list_users,
+	reset_password_by_identity,
+)
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -63,3 +72,26 @@ def bootstrap_admin(payload: UserCreate) -> TokenResponse:
 		)
 	except ValueError as error:
 		raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.put("/change-password")
+def change_password(
+	payload: ChangePasswordRequest,
+	user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, str]:
+	try:
+		change_password_for_user(user["id"], payload.current_password, payload.new_password)
+		return {"message": "Mat khau da duoc cap nhat."}
+	except KeyError as error:
+		raise HTTPException(status_code=404, detail=str(error)) from error
+	except ValueError as error:
+		raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordRequest) -> dict[str, str]:
+	try:
+		reset_password_by_identity(payload.username, payload.email, payload.new_password)
+		return {"message": "Mat khau da duoc dat lai."}
+	except ValueError as error:
+		raise HTTPException(status_code=400, detail=str(error)) from error

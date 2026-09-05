@@ -109,3 +109,36 @@ def test_change_password_with_token():
     )
 
     assert login_response.status_code == 200, login_response.text
+
+
+def test_reset_password_by_username_and_email():
+    username = "web_reset_password_user"
+    old_password = "WebOldPassword123"
+    new_password = "WebNewPassword456"
+    email = "webresetpassword@example.com"
+
+    register_response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": username,
+            "email": email,
+            "password": old_password,
+            "full_name": "Reset Password User",
+        },
+    )
+
+    assert register_response.status_code == 201, register_response.text
+
+    reset_response = client.post(
+        "/api/v1/auth/reset-password",
+        json={"username": username, "email": email, "new_password": new_password},
+    )
+
+    assert reset_response.status_code == 200, reset_response.text
+
+    login_response = client.post(
+        "/api/v1/auth/login",
+        json={"username": username, "password": new_password},
+    )
+
+    assert login_response.status_code == 200, login_response.text

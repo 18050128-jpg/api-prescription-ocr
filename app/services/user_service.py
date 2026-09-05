@@ -127,7 +127,7 @@ def reset_password_by_identity(username: str, email: str, new_password: str) -> 
 			if item.get("username", "").lower() == normalized_username
 			and item.get("email", "").lower() == normalized_email
 		),
-		none,
+		None,
 	)
 	if not user:
 		raise ValueError("Username hoac email khong dung.")

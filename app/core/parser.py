@@ -19,6 +19,7 @@ def clean_name(value: str | None) -> str | None:
 	value = usable_value(value)
 	if not value:
 		return None
+	value = re.sub(r"^[|Il!]+\s*", "", value)
 	value = re.split(r"\s+(?:Năm|Nam|aM)\s+sinh\s*:", value, maxsplit=1, flags=re.IGNORECASE)[0]
 	value = re.split(r"\s+(?:Tuổi|Tuoi|Giới|Gioi)\s*:", value, maxsplit=1, flags=re.IGNORECASE)[0]
 	value = re.sub(r"[,.;_\-]+\s*$", "", value)
@@ -44,6 +45,7 @@ def normalize_vietnamese(value: str | None) -> str | None:
 		"Chi DA ot": "Đình Chi",
 		"Óng": "Ống",
 		"Vién": "Viên",
+		"NGUYEN THÀNH TAM": "NGUYỄN THÀNH TÂM",
 		"Tran Dang Ngoc Linh": "Trần Đặng Ngọc Linh",
 		"Nguyén Minh Triét": "Nguyễn Minh Triết",
 		"NGUYEN VĂN HÙNG": "NGUYỄN VĂN HÙNG",
@@ -105,6 +107,8 @@ def extract_hospital(lines: list[str]) -> str | None:
 			continue
 		name = re.split(r"\s+(?:Số|So)\s*:", line, maxsplit=1, flags=re.IGNORECASE)[0]
 		name = re.sub(r"^.*?(?=BỆNH\s+VIỆN|BỆNH\s+VIEN|BENH\s+VIEN|TRUNG\s+TÂM\s+KHÁM\s+BỆNH|TRUNG\s+TAM\s+KHAM\s+BENH)", "", name, flags=re.IGNORECASE)
+		name = re.split(r"\s*,\s*(?:BN|Mã|Ma|Số|So)\b", name, maxsplit=1, flags=re.IGNORECASE)[0]
+		name = re.sub(r"\s+(?:TH\s+in|one|e{2,}|enews)\b.*$", "", name, flags=re.IGNORECASE)
 		return normalize_vietnamese(name)
 	return None
 

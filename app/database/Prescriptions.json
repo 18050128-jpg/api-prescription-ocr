@@ -48,7 +48,7 @@
     "created_at": "2026-09-03T23:02:22.628143+00:00",
     "data": {
       "tep_anh": "prescription_b6122f0198314e189c31886c9c294bb4.png",
-      "ten_benh_vien": "BỆNH VIỆN THỰC HÀNH SỐ 01 TH in, BN-260001",
+      "ten_benh_vien": "BỆNH VIỆN THỰC HÀNH SỐ 01",
       "bac_si": [
         "Nguyễn Minh Triết"
       ],
@@ -91,7 +91,7 @@
     "created_at": "2026-09-03T23:04:18.946829+00:00",
     "data": {
       "tep_anh": "prescription_d51f4751281c4f25af6c8381bb943e3f.png",
-      "ten_benh_vien": "BỆNH VIỆN THỰC HÀNH SỐ 02 one",
+      "ten_benh_vien": "BỆNH VIỆN THỰC HÀNH SỐ 02",
       "bac_si": [
         "Nguyễn Minh Triết"
       ],

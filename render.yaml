@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: prescription-ocr-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: TESSERACT_CMD
+        value: /usr/bin/tesseract
+      - key: FRONTEND_URL
+        sync: false

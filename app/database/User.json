@@ -1,0 +1,43 @@
+[
+  {
+    "id": "c19d409c-22b5-4bd2-93d6-260e616c62f0",
+    "username": "adminuser",
+    "email": "admin@example.com",
+    "password_hash": "pbkdf2_sha256$120000$67807e6550a267905011606f67c2aaaf$c006eac968ee965e506ea39c257afc899ce2fb386ccbc0c049d5eaa4472364d7",
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-09-03T22:15:21.737291+00:00",
+    "updated_at": "2026-09-03T22:15:21.737291+00:00"
+  },
+  {
+    "id": "c6e87bb6-9752-4378-b18b-6e5e56fa5549",
+    "username": "admin4",
+    "email": "admin4@admin4.com",
+    "password_hash": "pbkdf2_sha256$120000$2213fbeb95286a1ecdc22ee65ff6e029$b5fa62f2d22e9241c2527f24fb70601dc0591dffc3fc3d1bac177f3b53c1891b",
+    "role": "user",
+    "is_active": true,
+    "created_at": "2026-09-03T22:35:30.994769+00:00",
+    "updated_at": "2026-09-03T22:53:41.391616+00:00"
+  },
+  {
+    "id": "a5ec1f9b-3e7c-4f02-ad46-b0636bbe7a06",
+    "username": "admin",
+    "email": "admin@admin.com",
+    "password_hash": "pbkdf2_sha256$120000$8567c017af2a5bc2b09d77b6c76dbb0d$fd0f021432108068ad1aca1b46d382988304fc79a00a950a1070216a1a030bde",
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-09-03T22:38:01.788315+00:00",
+    "updated_at": "2026-09-03T22:38:01.788315+00:00"
+  },
+  {
+    "id": "914d0734-e69b-488b-892a-0fc7ebfc266a",
+    "username": "admin3",
+    "email": "admin3@admin3.com",
+    "full_name": "admin3",
+    "password_hash": "pbkdf2_sha256$120000$23591afaa2dc2d83beba3bb7096e3b64$a6fa17ccbf0eaca28438bd57059c27f9578ecb1db7e922f701bd2c99622a581e",
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-09-03T22:57:37.101958+00:00",
+    "updated_at": "2026-09-03T22:57:37.101958+00:00"
+  }
+]

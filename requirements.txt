@@ -1,0 +1,4 @@
+# Runtime OCR dependencies optimized for a headless Linux container
+opencv-python-headless==4.10.0.84
+pillow==11.3.0
+pytesseract==0.3.13

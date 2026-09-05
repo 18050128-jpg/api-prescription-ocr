@@ -1,0 +1,58 @@
+[
+  {
+    "id": "7072792e-4b93-46c5-94a1-357bcdf26ce1",
+    "prescription_id": "720ac0ae-db4d-4669-b045-ac0a015865c2",
+    "ten": "Paclitaxel (Anzatax 100mg/16.7ml )",
+    "so_luong": "111",
+    "huong_dan": "",
+    "updated_at": "2026-09-03T23:02:58.766257+00:00"
+  },
+  {
+    "id": "167e80fd-a514-4e01-b105-9fd26cbd2831",
+    "prescription_id": "720ac0ae-db4d-4669-b045-ac0a015865c2",
+    "ten": "Dexamethasone 4mg",
+    "so_luong": "1",
+    "huong_dan": "Sáng : 2; Trưa : 2 ; Chiều : 0 ; Tôi : 0 (Uống sau ăn no)",
+    "updated_at": "2026-09-03T23:03:39.237677+00:00"
+  },
+  {
+    "id": "7e64ef65-9504-4236-9b2b-a5ecbd10c80c",
+    "prescription_id": "ee68b012-c085-44f4-a199-7ccfab3ce3e2",
+    "ten": "Paracetamol 500 mg",
+    "so_luong": "6 Viên",
+    "huong_dan": "Uống 1 viên khi đau, tối đa 3 lần trong ngày.",
+    "updated_at": "2026-09-03T23:07:26.259306+00:00"
+  },
+  {
+    "id": "3be5f0f3-33c8-45a8-9725-f14e1009f6e5",
+    "prescription_id": "ee68b012-c085-44f4-a199-7ccfab3ce3e2",
+    "ten": "Atorvastatin 20 mg",
+    "so_luong": "25 Viên",
+    "huong_dan": "Uống 1 viên vào buổi tối.",
+    "updated_at": "2026-09-03T23:07:37.462196+00:00"
+  },
+  {
+    "id": "51fbd47e-5cc2-4cf1-8bb4-1dc9ae8653fb",
+    "prescription_id": "eafe27ee-a3da-4d23-9dde-be502af87893",
+    "ten": "Natri clorid 0,9% 10 ml",
+    "so_luong": "2 Ống",
+    "huong_dan": "Sử dụng theo hướng dẫn tại cơ sở y tế.",
+    "updated_at": "2026-09-03T23:08:12.277221+00:00"
+  },
+  {
+    "id": "24ecffdc-9790-4a9e-954b-500fb837c50d",
+    "prescription_id": "eafe27ee-a3da-4d23-9dde-be502af87893",
+    "ten": "Ibuprofen 200 mg",
+    "so_luong": "9 Viên",
+    "huong_dan": "Uống 1 viên sau ăn khi đau, cách nhau tối thiểu 6 giờ.",
+    "updated_at": "2026-09-03T23:07:22.763220+00:00"
+  },
+  {
+    "id": "7fb87f10-9ced-4794-8e22-4c85714b2f31",
+    "prescription_id": "eafe27ee-a3da-4d23-9dde-be502af87893",
+    "ten": "Esomeprazole 40 mg",
+    "so_luong": "14 Viên",
+    "huong_dan": "Uống 1 viên vào budi sáng, trước ăn 30 phút.",
+    "updated_at": "2026-09-03T23:04:18.946829+00:00"
+  }
+]

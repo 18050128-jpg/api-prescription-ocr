@@ -3,6 +3,7 @@ services:
     name: prescription-ocr-api
     runtime: docker
     plan: free
+    region: singapore
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/v1/health
     envVars:

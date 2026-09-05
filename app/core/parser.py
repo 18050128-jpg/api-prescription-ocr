@@ -43,6 +43,7 @@ def normalize_vietnamese(value: str | None) -> str | None:
 		"căng thang": "căng thẳng",
 		"Chi DA ot": "Đình Chi",
 		"Óng": "Ống",
+		"Vién": "Viên",
 		"Tran Dang Ngoc Linh": "Trần Đặng Ngọc Linh",
 		"Nguyén Minh Triét": "Nguyễn Minh Triết",
 		"NGUYEN VĂN HÙNG": "NGUYỄN VĂN HÙNG",
@@ -265,7 +266,7 @@ def is_quantity_only(line: str) -> bool:
 
 def outpatient_medicines(lines: list[str]) -> list[dict[str, str]]:
 	medicines: list[dict[str, str]] = []
-	quantity_units = r"mg|ml|mcg|g|viên|vien|gói|goi|ống|Óng|ong|chai"
+	quantity_units = r"mg|ml|mcg|g|viên|vien|vién|gói|goi|ống|Óng|ong|chai"
 	quantity_value = re.compile(rf"^\s*\d+(?:\.\d+)?\s+(?:{quantity_units})\s*$", re.IGNORECASE)
 	inline_medicine = re.compile(rf"^\s*(?:\d+\s*[-.)]?\s*)?(.+?)\s+(?:Số lượng|SL)\s*:?\s*(\d+(?:\.\d+)?\s+(?:{quantity_units}))\s*$", re.IGNORECASE)
 	start = next((index for index, line in enumerate(lines) if re.search(r"Điều trị|Dieu tri", line, re.IGNORECASE)), 0)

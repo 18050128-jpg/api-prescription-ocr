@@ -85,6 +85,8 @@ Role hiện có: `user`, `doctor`, `pharmacist`, `admin`.
 | `PATCH` | `/api/v1/medicines/{id}` | `doctor`, `pharmacist` | Cập nhật `ten`, `so_luong`, `huong_dan` |
 | `GET` | `/api/v1/users` | `admin` | Danh sách người dùng |
 | `GET` | `/api/v1/admin/users` | `admin` | Danh sách người dùng quản trị |
+| `GET` | `/api/v1/admin/stats` | `admin` | Thống kê hệ thống và OCR |
+| `GET` | `/api/v1/admin/audit-logs` | `admin` | Audit log thao tác quản trị |
 | `POST` | `/api/v1/admin/users/create-admin` | `admin` | Tạo admin |
 | `PUT` | `/api/v1/admin/users/{id}/role` | `admin` | Đổi role |
 | `PUT` | `/api/v1/admin/users/{id}/toggle-active` | `admin` | Bật/tắt tài khoản |

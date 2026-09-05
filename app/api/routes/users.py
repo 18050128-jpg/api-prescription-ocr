@@ -10,6 +10,7 @@ from app.services.user_service import (
 	toggle_user_active,
 	update_user_role,
 )
+from app.services.admin_service import get_admin_stats, get_audit_logs, record_audit
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -17,9 +18,11 @@ admin_router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_managed_user(payload: UserCreate, _: dict = Depends(require_roles("admin"))) -> UserResponse:
+def create_managed_user(payload: UserCreate, admin: dict = Depends(require_roles("admin"))) -> UserResponse:
 	try:
-		return create_user(payload)
+		result = create_user(payload)
+		record_audit(admin, "user_created", result.id, f"role={result.role}")
+		return result
 	except ValueError as error:
 		raise HTTPException(status_code=409, detail=str(error)) from error
 
@@ -34,10 +37,22 @@ def get_admin_users(_: dict = Depends(require_roles("admin"))) -> list[UserRespo
 	return list_users()
 
 
+@admin_router.get("/stats")
+def get_statistics(_: dict = Depends(require_roles("admin"))) -> dict:
+	return get_admin_stats()
+
+
+@admin_router.get("/audit-logs")
+def get_logs(_: dict = Depends(require_roles("admin"))) -> list[dict]:
+	return get_audit_logs()
+
+
 @admin_router.post("/users/create-admin", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_admin_user(payload: UserCreate, _: dict = Depends(require_roles("admin"))) -> UserResponse:
+def create_admin_user(payload: UserCreate, admin: dict = Depends(require_roles("admin"))) -> UserResponse:
 	try:
-		return create_user(payload.model_copy(update={"role": "admin"}))
+		result = create_user(payload.model_copy(update={"role": "admin"}))
+		record_audit(admin, "admin_created", result.id, f"username={result.username}")
+		return result
 	except ValueError as error:
 		raise HTTPException(status_code=409, detail=str(error)) from error
 
@@ -51,7 +66,9 @@ def change_user_role(
 	if user_id == admin.get("id"):
 		raise HTTPException(status_code=400, detail="Ban khong the tu doi role cua minh.")
 	try:
-		return update_user_role(user_id, payload.role)
+		result = update_user_role(user_id, payload.role)
+		record_audit(admin, "role_changed", user_id, f"role={payload.role}")
+		return result
 	except KeyError as error:
 		raise HTTPException(status_code=404, detail=str(error)) from error
 	except ValueError as error:
@@ -66,7 +83,9 @@ def change_user_active(
 	if user_id == admin.get("id"):
 		raise HTTPException(status_code=400, detail="Ban khong the tu khoa hoac mo khoa minh.")
 	try:
-		return toggle_user_active(user_id)
+		result = toggle_user_active(user_id)
+		record_audit(admin, "user_status_changed", user_id, f"is_active={result.is_active}")
+		return result
 	except KeyError as error:
 		raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -78,7 +97,9 @@ def change_user_password(
 	_: dict = Depends(require_roles("admin")),
 ) -> UserResponse:
 	try:
-		return reset_user_password(user_id, payload.password)
+		result = reset_user_password(user_id, payload.password)
+		record_audit(_, "password_reset", user_id)
+		return result
 	except KeyError as error:
 		raise HTTPException(status_code=404, detail=str(error)) from error
 	except ValueError as error:
@@ -94,6 +115,7 @@ def remove_user(
 		raise HTTPException(status_code=400, detail="Ban khong the tu xoa minh.")
 	try:
 		delete_user(user_id)
+		record_audit(admin, "user_deleted", user_id)
 		return Response(status_code=status.HTTP_204_NO_CONTENT)
 	except KeyError as error:
 		raise HTTPException(status_code=404, detail=str(error)) from error

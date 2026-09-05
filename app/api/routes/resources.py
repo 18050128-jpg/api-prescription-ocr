@@ -16,12 +16,12 @@ def get_prescriptions(user: dict[str, Any] = Depends(require_roles("doctor", "us
 
 
 @router.get("/medicines", response_model=list[MedicineResponse])
-def get_medicines(_: dict[str, Any] = Depends(require_roles("doctor", "user"))) -> list[MedicineResponse]:
+def get_medicines(_: dict[str, Any] = Depends(require_roles("doctor", "pharmacist"))) -> list[MedicineResponse]:
 	return list_medicines()
 
 
 @router.patch("/medicines/{medicine_id}", response_model=MedicineResponse)
-def edit_medicine(medicine_id: str, payload: MedicineUpdate, _: dict[str, Any] = Depends(require_roles("doctor"))) -> MedicineResponse:
+def edit_medicine(medicine_id: str, payload: MedicineUpdate, _: dict[str, Any] = Depends(require_roles("doctor", "pharmacist"))) -> MedicineResponse:
 	medicine = update_medicine(medicine_id, payload)
 	if not medicine:
 		raise HTTPException(status_code=404, detail="Khong tim thay thuoc.")

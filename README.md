@@ -12,6 +12,8 @@ pinned: false
 
 Backend FastAPI xử lý OCR toa thuốc, xác thực người dùng và quản lý dữ liệu thuốc/đơn thuốc.
 
+Các role được hỗ trợ: `admin`, `doctor`, `pharmacist`, `user`.
+
 ## Cài đặt
 
 Yêu cầu Python 3.11+ và Tesseract OCR đã được cài trên máy.
@@ -65,7 +67,7 @@ Gửi token ở các request cần xác thực:
 Authorization: Bearer <jwt>
 ```
 
-Role hiện có: `user`, `doctor`, `admin`.
+Role hiện có: `user`, `doctor`, `pharmacist`, `admin`.
 
 ## Endpoint chính
 
@@ -79,8 +81,8 @@ Role hiện có: `user`, `doctor`, `admin`.
 | `POST` | `/api/v1/prescriptions/ocr` | `user`, `doctor` | Upload ảnh với multipart field `file` |
 | `GET` | `/api/v1/prescriptions` | `user`, `doctor` | Lấy danh sách bản ghi đơn thuốc |
 | `POST` | `/api/v1/prescriptions/{id}/medicines/{index}/use` | `user`, `doctor` | Giảm số lượng thuốc đã dùng |
-| `GET` | `/api/v1/medicines` | `user`, `doctor` | Lấy kho thuốc |
-| `PATCH` | `/api/v1/medicines/{id}` | `doctor` | Cập nhật `ten`, `so_luong`, `huong_dan` |
+| `GET` | `/api/v1/medicines` | `doctor`, `pharmacist` | Lấy kho thuốc |
+| `PATCH` | `/api/v1/medicines/{id}` | `doctor`, `pharmacist` | Cập nhật `ten`, `so_luong`, `huong_dan` |
 | `GET` | `/api/v1/users` | `admin` | Danh sách người dùng |
 | `GET` | `/api/v1/admin/users` | `admin` | Danh sách người dùng quản trị |
 | `POST` | `/api/v1/admin/users/create-admin` | `admin` | Tạo admin |

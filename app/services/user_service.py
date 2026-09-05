@@ -70,7 +70,7 @@ def update_user_role(user_id: str, role: str) -> UserResponse:
 	user = next((item for item in users if item.get("id") == user_id), None)
 	if not user:
 		raise KeyError("Khong tim thay nguoi dung.")
-	if role not in {"admin", "doctor", "user"}:
+	if role not in {"admin", "doctor", "pharmacist", "user"}:
 		raise ValueError("Role khong hop le.")
 	user["role"] = role
 	user["updated_at"] = datetime.now(timezone.utc).isoformat()

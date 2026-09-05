@@ -3,11 +3,11 @@
     "id": "c19d409c-22b5-4bd2-93d6-260e616c62f0",
     "username": "adminuser",
     "email": "admin@example.com",
-    "password_hash": "pbkdf2_sha256$120000$67807e6550a267905011606f67c2aaaf$c006eac968ee965e506ea39c257afc899ce2fb386ccbc0c049d5eaa4472364d7",
-    "role": "admin",
+    "password_hash": "pbkdf2_sha256$120000$0a24fb72997c07d772f483e6e628f1f5$16097b2402af22cfdf98a3add464ce2f419fb852f45eabad97fbdfaf29574be9",
+    "role": "pharmacist",
     "is_active": true,
     "created_at": "2026-09-03T22:15:21.737291+00:00",
-    "updated_at": "2026-09-03T22:15:21.737291+00:00"
+    "updated_at": "2026-09-05T13:54:22.428058+00:00"
   },
   {
     "id": "c6e87bb6-9752-4378-b18b-6e5e56fa5549",

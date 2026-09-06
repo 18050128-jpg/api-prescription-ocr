@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.api.dependencies import require_roles
-from app.schemas.prescription import MedicineScheduleUpdate, PrescriptionResponse
+from app.schemas.prescription import MedicineScheduleUpdate, MedicineUseRequest, PrescriptionResponse
 from app.schemas.resource import PrescriptionRecord
 from app.services.image_service import store_uploaded_image
 from app.services.prescription_service import process_prescription
@@ -47,10 +47,16 @@ def create_prescription(
 def use_prescription_medicine(
 	prescription_id: str,
 	medicine_index: int,
+	payload: MedicineUseRequest,
 	user: dict[str, Any] = Depends(require_roles("doctor", "user")),
 ) -> PrescriptionResponse:
 	try:
-		prescription = consume_medicine(prescription_id, medicine_index, user)
+		prescription = consume_medicine(
+			prescription_id,
+			medicine_index,
+			user,
+			payload.used_quantity,
+		)
 		return PrescriptionResponse.model_validate(prescription.data)
 	except (KeyError, IndexError) as error:
 		raise HTTPException(status_code=404, detail=str(error)) from error

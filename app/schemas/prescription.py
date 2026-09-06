@@ -16,6 +16,10 @@ class MedicineScheduleUpdate(BaseModel):
 	reminder_times: list[str] = Field(default_factory=list)
 
 
+class MedicineUseRequest(BaseModel):
+	used_quantity: int = Field(gt=0)
+
+
 class OcrInfo(BaseModel):
 	so_doan_van_ban: int
 	do_tin_cay_trung_binh: float = Field(ge=0, le=1)

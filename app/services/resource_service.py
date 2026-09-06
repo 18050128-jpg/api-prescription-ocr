@@ -47,7 +47,7 @@ def save_prescription(owner_id: str, result: dict[str, Any]) -> PrescriptionReco
 	_write(PRESCRIPTIONS_PATH, prescriptions)
 	medicines = _read(MEDICINES_PATH)
 	for item in result.get("thuoc", []):
-		medicines.append({"id": str(uuid.uuid4()), "prescription_id": prescription_id, "ten": item["ten"], "so_luong": _normalize_quantity(item.get("so_luong")), "huong_dan": item.get("huong_dan"), "updated_at": now})
+		medicines.append({"id": str(uuid.uuid4()), "prescription_id": prescription_id, "ten": item["ten"], "so_luong": _normalize_quantity(item.get("so_luong")), "huong_dan": item.get("huong_dan"), "reminder_times": item.get("reminder_times", []), "updated_at": now})
 	_write(MEDICINES_PATH, medicines)
 	return PrescriptionRecord.model_validate(prescription)
 
@@ -141,7 +141,15 @@ def update_medicine(medicine_id: str, payload: MedicineUpdate) -> MedicineRespon
 	return None
 
 
-def consume_medicine(prescription_id: str, medicine_index: int, user: dict[str, Any]) -> PrescriptionRecord:
+def consume_medicine(
+	prescription_id: str,
+	medicine_index: int,
+	user: dict[str, Any],
+	used_quantity: int,
+) -> PrescriptionRecord:
+	if used_quantity <= 0:
+		raise ValueError("So vien su dung phai lon hon 0.")
+
 	prescriptions = _read(PRESCRIPTIONS_PATH)
 	prescription = next((item for item in prescriptions if item.get("id") == prescription_id), None)
 	if not prescription or not _can_access_prescription(prescription, user):
@@ -156,7 +164,10 @@ def consume_medicine(prescription_id: str, medicine_index: int, user: dict[str, 
 	if not match or float(match.group(1).replace(",", ".")) <= 0:
 		raise ValueError("Thuoc da het so luong.")
 
-	remaining = float(match.group(1).replace(",", ".")) - 1
+	current_quantity = float(match.group(1).replace(",", "."))
+	remaining = current_quantity - used_quantity
+	if remaining < 0:
+		raise ValueError("So vien su dung vuot qua so luong con lai.")
 	quantity_value = str(int(remaining)) if remaining.is_integer() else str(remaining)
 	medicines[medicine_index]["so_luong"] = f"{quantity_value}{match.group(2)}"
 	prescription["data"]["thuoc"] = medicines
@@ -190,8 +201,11 @@ def update_medicine_schedule(
 	if not 0 <= medicine_index < len(medicines):
 		raise IndexError("Khong tim thay thuoc trong don.")
 
-	clean_times = sorted(set(payload.reminder_times))
-	if any(not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", time) for time in clean_times):
+	clean_times = [time.strip() for time in payload.reminder_times]
+	if len(clean_times) > 4 or any(
+		time and not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", time)
+		for time in clean_times
+	):
 		raise ValueError("Gio nhac thuoc khong hop le.")
 	medicines[medicine_index]["reminder_times"] = clean_times
 	prescription["data"]["thuoc"] = medicines

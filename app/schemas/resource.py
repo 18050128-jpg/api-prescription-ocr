@@ -21,3 +21,12 @@ class PrescriptionRecord(BaseModel):
 	tep_anh: str
 	created_at: datetime
 	data: dict
+
+
+class PrescriptionPage(BaseModel):
+	items: list[PrescriptionRecord]
+	page: int
+	page_size: int
+	total: int
+	total_pages: int
+	summary: dict[str, int] = Field(default_factory=dict)

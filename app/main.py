@@ -22,6 +22,7 @@ app.add_middleware(
         if origin.strip()
     ],
     allow_credentials=True,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_methods=["*"],
     allow_headers=["*"],
 )

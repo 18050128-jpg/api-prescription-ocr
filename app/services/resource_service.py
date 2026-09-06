@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.schemas.resource import MedicineResponse, MedicineUpdate, PrescriptionRecord
+from app.schemas.resource import MedicineResponse, MedicineUpdate, PrescriptionPage, PrescriptionRecord
 
 
 DATABASE_DIR = Path(__file__).resolve().parent.parent / "database"
@@ -51,11 +51,74 @@ def save_prescription(owner_id: str, result: dict[str, Any]) -> PrescriptionReco
 	return PrescriptionRecord.model_validate(prescription)
 
 
+def _can_access_prescription(prescription: dict[str, Any], user: dict[str, Any]) -> bool:
+	return user.get("role") not in {"user", "doctor"} or prescription.get("owner_id") == user.get("id")
+
+
 def list_prescriptions(user: dict[str, Any]) -> list[PrescriptionRecord]:
 	items = _read(PRESCRIPTIONS_PATH)
-	if user.get("role") == "user":
-		items = [item for item in items if item.get("owner_id") == user.get("id")]
+	items = [item for item in items if _can_access_prescription(item, user)]
 	return [PrescriptionRecord.model_validate(item) for item in items]
+
+
+def list_prescriptions_page(
+	user: dict[str, Any],
+	page: int = 1,
+	page_size: int = 10,
+	search: str = "",
+	status: str = "all",
+	sort: str = "newest",
+) -> PrescriptionPage:
+	all_items = list_prescriptions(user)
+	confidence = lambda item: float((item.data.get("ocr") or {}).get("do_tin_cay_trung_binh") or 0)
+	summary = {
+		"total": len(all_items),
+		"success": sum(confidence(item) >= 0.75 for item in all_items),
+		"review": sum(0 < confidence(item) < 0.75 for item in all_items),
+		"today": sum(item.created_at.date() == datetime.now(timezone.utc).date() for item in all_items),
+	}
+	normalized_search = search.strip().lower()
+	filtered = []
+	for item in all_items:
+		item_status = "success" if confidence(item) >= 0.75 else "review" if confidence(item) > 0 else "unknown"
+		search_text = " ".join(
+			str(value)
+			for value in (
+				item.data.get("ten_benh_vien"),
+				item.data.get("ho_ten"),
+				item.data.get("ngay_ke"),
+				item.data.get("chan_doan"),
+				*item.data.get("bac_si", []),
+				*(medicine.get("ten", "") for medicine in item.data.get("thuoc", [])),
+			)
+			if value
+		).lower()
+		if status != "all" and item_status != status:
+			continue
+		if normalized_search and normalized_search not in search_text:
+			continue
+		filtered.append(item)
+
+	if sort == "oldest":
+		filtered.sort(key=lambda item: item.created_at)
+	elif sort == "patient":
+		filtered.sort(key=lambda item: str(item.data.get("ho_ten") or "").lower())
+	elif sort == "confidence":
+		filtered.sort(key=confidence, reverse=True)
+	else:
+		filtered.sort(key=lambda item: item.created_at, reverse=True)
+
+	total = len(filtered)
+	start = (page - 1) * page_size
+	items = filtered[start : start + page_size]
+	return PrescriptionPage(
+		items=items,
+		page=page,
+		page_size=page_size,
+		total=total,
+		total_pages=max(1, (total + page_size - 1) // page_size),
+		summary=summary,
+	)
 
 
 def list_medicines() -> list[MedicineResponse]:
@@ -80,7 +143,7 @@ def update_medicine(medicine_id: str, payload: MedicineUpdate) -> MedicineRespon
 def consume_medicine(prescription_id: str, medicine_index: int, user: dict[str, Any]) -> PrescriptionRecord:
 	prescriptions = _read(PRESCRIPTIONS_PATH)
 	prescription = next((item for item in prescriptions if item.get("id") == prescription_id), None)
-	if not prescription or (user.get("role") == "user" and prescription.get("owner_id") != user.get("id")):
+	if not prescription or not _can_access_prescription(prescription, user):
 		raise KeyError("Khong tim thay don thuoc.")
 
 	medicines = prescription.get("data", {}).get("thuoc", [])

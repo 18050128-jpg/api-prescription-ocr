@@ -9,6 +9,11 @@ class Medicine(BaseModel):
 	ten: str
 	so_luong: str | None = None
 	huong_dan: str | None = None
+	reminder_times: list[str] = Field(default_factory=list)
+
+
+class MedicineScheduleUpdate(BaseModel):
+	reminder_times: list[str] = Field(default_factory=list)
 
 
 class OcrInfo(BaseModel):
@@ -18,6 +23,7 @@ class OcrInfo(BaseModel):
 
 
 class PrescriptionResponse(BaseModel):
+	id: str | None = None
 	tep_anh: str
 	ten_benh_vien: str | None = None
 	bac_si: list[str] = Field(default_factory=list)

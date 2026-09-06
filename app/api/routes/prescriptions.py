@@ -3,11 +3,11 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.api.dependencies import require_roles
-from app.schemas.prescription import PrescriptionResponse
+from app.schemas.prescription import MedicineScheduleUpdate, PrescriptionResponse
 from app.schemas.resource import PrescriptionRecord
 from app.services.image_service import store_uploaded_image
 from app.services.prescription_service import process_prescription
-from app.services.resource_service import consume_medicine, save_prescription
+from app.services.resource_service import consume_medicine, save_prescription, update_medicine_schedule
 
 
 router = APIRouter(prefix="/prescriptions", tags=["prescriptions"])
@@ -28,7 +28,8 @@ async def recognize_prescription(
 		result = process_prescription(stored_path.read_bytes(), stored_name)
 		result.tep_anh = stored_name
 		if persist:
-			save_prescription(user["id"], result.model_dump(mode="json"))
+			saved = save_prescription(user["id"], result.model_dump(mode="json"))
+			result.id = saved.id
 		return result
 	except ValueError as error:
 		raise HTTPException(status_code=400, detail=str(error)) from error
@@ -50,6 +51,22 @@ def use_prescription_medicine(
 ) -> PrescriptionResponse:
 	try:
 		prescription = consume_medicine(prescription_id, medicine_index, user)
+		return PrescriptionResponse.model_validate(prescription.data)
+	except (KeyError, IndexError) as error:
+		raise HTTPException(status_code=404, detail=str(error)) from error
+	except ValueError as error:
+		raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.patch("/{prescription_id}/medicines/{medicine_index}/schedule", response_model=PrescriptionResponse)
+def update_prescription_medicine_schedule(
+	prescription_id: str,
+	medicine_index: int,
+	payload: MedicineScheduleUpdate,
+	user: dict[str, Any] = Depends(require_roles("doctor", "user")),
+) -> PrescriptionResponse:
+	try:
+		prescription = update_medicine_schedule(prescription_id, medicine_index, payload, user)
 		return PrescriptionResponse.model_validate(prescription.data)
 	except (KeyError, IndexError) as error:
 		raise HTTPException(status_code=404, detail=str(error)) from error

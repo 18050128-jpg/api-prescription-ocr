@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from app.schemas.prescription import MedicineScheduleUpdate
 from app.schemas.resource import MedicineResponse, MedicineUpdate, PrescriptionPage, PrescriptionRecord
 
 
@@ -170,5 +171,31 @@ def consume_medicine(prescription_id: str, medicine_index: int, user: dict[str, 
 		inventory["so_luong"] = medicines[medicine_index]["so_luong"]
 		inventory["updated_at"] = prescriptions_updated_at
 		_write(MEDICINES_PATH, inventories)
+
+	return PrescriptionRecord.model_validate(prescription)
+
+
+def update_medicine_schedule(
+	prescription_id: str,
+	medicine_index: int,
+	payload: MedicineScheduleUpdate,
+	user: dict[str, Any],
+) -> PrescriptionRecord:
+	prescriptions = _read(PRESCRIPTIONS_PATH)
+	prescription = next((item for item in prescriptions if item.get("id") == prescription_id), None)
+	if not prescription or not _can_access_prescription(prescription, user):
+		raise KeyError("Khong tim thay don thuoc.")
+
+	medicines = prescription.get("data", {}).get("thuoc", [])
+	if not 0 <= medicine_index < len(medicines):
+		raise IndexError("Khong tim thay thuoc trong don.")
+
+	clean_times = sorted(set(payload.reminder_times))
+	if any(not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", time) for time in clean_times):
+		raise ValueError("Gio nhac thuoc khong hop le.")
+	medicines[medicine_index]["reminder_times"] = clean_times
+	prescription["data"]["thuoc"] = medicines
+	prescription["updated_at"] = datetime.now(timezone.utc).isoformat()
+	_write(PRESCRIPTIONS_PATH, prescriptions)
 
 	return PrescriptionRecord.model_validate(prescription)

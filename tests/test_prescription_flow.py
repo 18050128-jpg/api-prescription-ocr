@@ -144,6 +144,9 @@ def test_consume_medicine_validates_quantity_and_access(monkeypatch):
     assert used_response.status_code == 200, used_response.text
     assert used_response.json()["thuoc"][0]["so_luong"] == "3 vien"
 
+    inventory_rows = resource_service._read(resource_service.MEDICINES_PATH)
+    assert inventory_rows[-1]["so_luong"] == "3 vien"
+
     too_much = client.post(
         f"/api/v1/prescriptions/{saved.id}/medicines/0/use",
         json={"used_quantity": 10},

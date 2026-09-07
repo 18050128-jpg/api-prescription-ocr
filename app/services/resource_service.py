@@ -38,6 +38,34 @@ def _write(path: Path, data: list[dict[str, Any]]) -> None:
 	path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def _sync_inventory_for_prescription(prescription_id: str, medicines: list[dict[str, Any]], updated_at: str) -> None:
+	inventories = _read(MEDICINES_PATH)
+	rows_for_prescription = [item for item in inventories if item.get("prescription_id") == prescription_id]
+	if not rows_for_prescription:
+		return
+
+	for medicine_index, medicine in enumerate(medicines):
+		candidate = next(
+			(
+				row
+				for row in rows_for_prescription
+				if row.get("ten") == medicine.get("ten")
+				and (row.get("huong_dan") == medicine.get("huong_dan") or not row.get("huong_dan") and not medicine.get("huong_dan"))
+			),
+			None,
+		)
+		if candidate is None and medicine_index < len(rows_for_prescription):
+			candidate = rows_for_prescription[medicine_index]
+		if candidate is None:
+			continue
+		candidate["ten"] = medicine.get("ten", candidate.get("ten"))
+		candidate["so_luong"] = medicine.get("so_luong")
+		candidate["huong_dan"] = medicine.get("huong_dan")
+		candidate["updated_at"] = updated_at
+
+	_write(MEDICINES_PATH, inventories)
+
+
 def save_prescription(owner_id: str, result: dict[str, Any]) -> PrescriptionRecord:
 	now = datetime.now(timezone.utc).isoformat()
 	prescription_id = str(uuid.uuid4())
@@ -175,13 +203,7 @@ def consume_medicine(
 	prescription["updated_at"] = prescriptions_updated_at
 	_write(PRESCRIPTIONS_PATH, prescriptions)
 
-	inventories = _read(MEDICINES_PATH)
-	prescription_medicines = [item for item in inventories if item.get("prescription_id") == prescription_id]
-	if medicine_index < len(prescription_medicines):
-		inventory = prescription_medicines[medicine_index]
-		inventory["so_luong"] = medicines[medicine_index]["so_luong"]
-		inventory["updated_at"] = prescriptions_updated_at
-		_write(MEDICINES_PATH, inventories)
+	_sync_inventory_for_prescription(prescription_id, medicines, prescriptions_updated_at)
 
 	return PrescriptionRecord.model_validate(prescription)
 

@@ -10,6 +10,68 @@ from app.services import resource_service, user_service
 client = TestClient(app)
 
 
+def test_duplicate_medicine_warnings_ignore_case_and_accents():
+    warnings = resource_service.duplicate_medicine_warnings([
+        {"ten": "Paracetamol"},
+        {"ten": " paracetamol "},
+        {"ten": "Amoxicillin"},
+        {"ten": "Amoxicillin"},
+    ])
+
+    assert len(warnings) == 2
+    assert '"paracetamol"' in warnings[0]
+    assert '"Amoxicillin"' in warnings[1]
+
+
+def test_duplicate_medicine_warnings_ignore_strength_and_form():
+    warnings = resource_service.duplicate_medicine_warnings([
+        {"ten": "Paracetamol 500 mg"},
+        {"ten": " paracetamol 650mg (Panadol) Viên"},
+    ])
+
+    assert len(warnings) == 1
+    assert '"Paracetamol 500 mg"' in warnings[0]
+    assert '"paracetamol 650mg (Panadol) Viên"' in warnings[0]
+
+
+def test_save_prescription_merges_duplicate_medicine_names(monkeypatch):
+    temp_users = __import__("pathlib").Path(__import__("tempfile").mkdtemp()) / "User.json"
+    temp_users.parent.mkdir(parents=True, exist_ok=True)
+    temp_users.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(user_service, "USER_DB_PATH", temp_users)
+    user_service._tokens.clear()
+
+    temp_prescriptions = temp_users.parent / "Prescriptions.json"
+    temp_prescriptions.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(resource_service, "PRESCRIPTIONS_PATH", temp_prescriptions)
+    monkeypatch.setattr(resource_service, "MEDICINES_PATH", temp_users.parent / "Medicines.json")
+
+    token, _ = _register_and_login("merge_user", "merge_user@example.com")
+    user_id = next(item["id"] for item in user_service._read_users() if item["username"] == "merge_user")
+
+    resource_service.save_prescription(user_id, {
+        "tep_anh": "merge.png",
+        "ho_ten": "Merge User",
+        "thuoc": [
+            {"ten": "NEXIUM 40mg", "so_luong": "14 Viên", "huong_dan": "Sáng"},
+            {"ten": "NEXIUM 40mg", "so_luong": "14 Viên", "huong_dan": "Sáng"},
+            {"ten": "MAGNE B6 CORBIERE", "so_luong": "30 Viên", "huong_dan": "Uống 1 viên x 2 lần/ngày"},
+        ],
+        "van_ban_ocr": "test",
+        "ocr": {"so_doan_van_ban": 2, "do_tin_cay_trung_binh": 0.82, "engine": "tesseract"},
+    })
+
+    rows = resource_service._read(resource_service.MEDICINES_PATH)
+    assert len(rows) == 2
+    assert sum(1 for row in rows if row["ten"] == "NEXIUM 40mg") == 1
+    assert sum(1 for row in rows if row["ten"] == "MAGNE B6 CORBIERE") == 1
+    links = resource_service._read(temp_users.parent / "PrescriptionMedicines.json")
+    assert len(links) == 2
+    assert all(link["medicine_id"] in {row["id"] for row in rows} for link in links)
+
+    _ = token
+
+
 def _register_and_login(username: str, email: str, password: str = "StrongPass123", role: str = "user") -> tuple[str, dict[str, Any]]:
     register = client.post(
         "/api/v1/auth/register",
@@ -51,7 +113,9 @@ def test_prescription_ocr_route_returns_valid_payload(monkeypatch):
         "van_ban_ocr": "OCR test text",
         "ocr": {"so_doan_van_ban": 2, "do_tin_cay_trung_binh": 0.85, "engine": "tesseract"},
     }
-    monkeypatch.setattr("app.api.routes.prescriptions.store_uploaded_image", lambda content, filename: (temp_users.parent / "stored.png", "stored.png"))
+    stored_image = temp_users.parent / "stored.png"
+    stored_image.write_bytes(b"fake-image-bytes")
+    monkeypatch.setattr("app.api.routes.prescriptions.store_uploaded_image", lambda content, filename: (stored_image, "stored.png"))
     monkeypatch.setattr("app.api.routes.prescriptions.process_prescription", lambda content, filename: __import__("app.schemas.prescription", fromlist=["PrescriptionResponse"]).PrescriptionResponse.model_validate(fake_result))
     monkeypatch.setattr("app.api.routes.prescriptions.save_prescription", lambda user_id, payload: resource_service.PrescriptionRecord.model_validate({
         "id": "prescription-123",
@@ -144,7 +208,7 @@ def test_consume_medicine_validates_quantity_and_access(monkeypatch):
     assert used_response.status_code == 200, used_response.text
     assert used_response.json()["thuoc"][0]["so_luong"] == "3 vien"
 
-    inventory_rows = resource_service._read(resource_service.MEDICINES_PATH)
+    inventory_rows = resource_service._read(temp_users.parent / "PrescriptionMedicines.json")
     assert inventory_rows[-1]["so_luong"] == "3 vien"
 
     too_much = client.post(

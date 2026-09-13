@@ -1,10 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import require_roles
 from app.schemas.resource import MedicineResponse, MedicineUpdate, PrescriptionPage, PrescriptionRecord
-from app.services.resource_service import list_medicines, list_prescriptions, list_prescriptions_page, update_medicine
+from app.services.resource_service import delete_medicine, list_medicines, list_prescriptions, list_prescriptions_page, update_medicine
 
 
 router = APIRouter(tags=["database"])
@@ -38,3 +38,9 @@ def edit_medicine(medicine_id: str, payload: MedicineUpdate, _: dict[str, Any] =
 	if not medicine:
 		raise HTTPException(status_code=404, detail="Khong tim thay thuoc.")
 	return medicine
+
+
+@router.delete("/medicines/{medicine_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_medicine(medicine_id: str, _: dict[str, Any] = Depends(require_roles("doctor", "pharmacist"))) -> None:
+	if not delete_medicine(medicine_id):
+		raise HTTPException(status_code=404, detail="Khong tim thay thuoc.")

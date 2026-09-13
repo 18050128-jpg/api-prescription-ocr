@@ -83,6 +83,7 @@ Role hiện có: `user`, `doctor`, `pharmacist`, `admin`.
 | `POST` | `/api/v1/prescriptions/{id}/medicines/{index}/use` | `user`, `doctor` | Giảm số lượng thuốc đã dùng |
 | `GET` | `/api/v1/medicines` | `doctor`, `pharmacist` | Lấy kho thuốc |
 | `PATCH` | `/api/v1/medicines/{id}` | `doctor`, `pharmacist` | Cập nhật `ten`, `so_luong`, `huong_dan` |
+| `DELETE` | `/api/v1/medicines/{id}` | `doctor`, `pharmacist` | Xóa thuốc khỏi kho và đơn thuốc nguồn |
 | `GET` | `/api/v1/users` | `admin` | Danh sách người dùng |
 | `GET` | `/api/v1/admin/users` | `admin` | Danh sách người dùng quản trị |
 | `GET` | `/api/v1/admin/stats` | `admin` | Thống kê hệ thống và OCR |
@@ -105,6 +106,7 @@ Role hiện có: `user`, `doctor`, `pharmacist`, `admin`.
   "bac_si": ["..."],
   "ngay_ke": "...",
   "chan_doan": "...",
+  "warnings": ["Thuốc ... bị trùng với thuốc ... trong cùng đơn."],
   "thuoc": [
     {"ten": "...", "so_luong": "...", "huong_dan": "..."}
   ],

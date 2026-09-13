@@ -1,16 +1,29 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 
 from app.api.dependencies import require_roles
-from app.schemas.prescription import MedicineScheduleUpdate, MedicineUseRequest, PrescriptionResponse
+from app.schemas.prescription import Medicine, MedicineScheduleUpdate, MedicineUseRequest, PrescriptionResponse
 from app.schemas.resource import PrescriptionRecord
 from app.services.image_service import store_uploaded_image
 from app.services.prescription_service import process_prescription
-from app.services.resource_service import consume_medicine, save_prescription, update_medicine_schedule
+from app.services.drug_info_service import enrich_medicines
+from app.services.resource_service import consume_medicine, duplicate_medicine_warnings, prescription_image_path, save_prescription, update_medicine_schedule
 
 
 router = APIRouter(prefix="/prescriptions", tags=["prescriptions"])
+
+
+@router.get("/{prescription_id}/image")
+def get_prescription_image(
+	prescription_id: str,
+	user: dict[str, Any] = Depends(require_roles("admin", "doctor", "pharmacist", "user")),
+) -> FileResponse:
+	image_path = prescription_image_path(prescription_id, user)
+	if image_path is None:
+		raise HTTPException(status_code=404, detail="Khong tim thay anh toa thuoc.")
+	return FileResponse(image_path)
 
 
 @router.post("/ocr", response_model=PrescriptionResponse)
@@ -27,6 +40,9 @@ async def recognize_prescription(
 		stored_path, stored_name = store_uploaded_image(content, file.filename or "prescription.png")
 		result = process_prescription(stored_path.read_bytes(), stored_name)
 		result.tep_anh = stored_name
+		enriched = enrich_medicines([medicine.model_dump() for medicine in result.thuoc])
+		result.thuoc = [Medicine.model_validate(medicine) for medicine in enriched]
+		result.warnings = duplicate_medicine_warnings([medicine.model_dump() for medicine in result.thuoc])
 		if persist:
 			saved = save_prescription(user["id"], result.model_dump(mode="json"))
 			result.id = saved.id

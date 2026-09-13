@@ -7,9 +7,11 @@ from pydantic import BaseModel, Field
 
 class Medicine(BaseModel):
 	ten: str
+	lieu_luong: str | None = None
 	so_luong: str | None = None
 	huong_dan: str | None = None
 	reminder_times: list[str] = Field(default_factory=list)
+	drug_info: dict[str, Any] = Field(default_factory=dict)
 
 
 class MedicineScheduleUpdate(BaseModel):
@@ -28,6 +30,7 @@ class OcrInfo(BaseModel):
 
 class PrescriptionResponse(BaseModel):
 	id: str | None = None
+	warnings: list[str] = Field(default_factory=list)
 	tep_anh: str
 	ten_benh_vien: str | None = None
 	bac_si: list[str] = Field(default_factory=list)

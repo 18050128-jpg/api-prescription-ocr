@@ -241,6 +241,34 @@ def legacy_medicines(lines: list[str]) -> list[dict[str, str]]:
 	return medicines
 
 
+def numbered_medicines(lines: list[str]) -> list[dict[str, str]]:
+	medicines: list[dict[str, str]] = []
+	marker = re.compile(r"^\s*\d+\s*[-.)]\s*(.*)$")
+	quantity_pattern = re.compile(r"(?:Số lượng|So luong|SL)\s*:?\s*(\d+(?:[.,]\d+)?(?:\s*[A-Za-zÀ-ỹĐđ]+)?)", re.IGNORECASE)
+	for index, line in enumerate(lines):
+		match = marker.match(line)
+		if not match:
+			continue
+		name = normalize_text(match.group(1)).strip(" .:-")
+		if not name and index + 1 < len(lines):
+			name = normalize_text(lines[index + 1]).strip(" .:-")
+		if not name or is_non_medicine_label(name) or len(name) < 3:
+			continue
+		window = lines[index : min(len(lines), index + 6)]
+		quantity = next((quantity_pattern.search(item) for item in window if quantity_pattern.search(item)), None)
+		medicine: dict[str, str] = {"ten": name}
+		if quantity:
+			medicine["so_luong"] = normalize_vietnamese(quantity.group(1)) or quantity.group(1)
+		for instruction_line in window[1:]:
+			instruction = normalize_text(instruction_line)
+			if re.search(r"Uống|Uong|Truyền|Truyen|Sáng|Sang|Chiều|Chieu|Tối|Toi|Hòa|Hoa|Pha", instruction, re.IGNORECASE):
+				medicine["huong_dan"] = instruction
+				break
+		if not any(normalize_text(item.get("ten", "")).lower() == name.lower() for item in medicines):
+			medicines.append(medicine)
+	return medicines
+
+
 def oncology_medicines(lines: list[str]) -> list[dict[str, str]]:
 	medicines: list[dict[str, str]] = []
 	inline = re.compile(r"^\s*\d+\s*[-.)]\s*(.+?)\s+(?:Số lượng|So luong)\s*:\s*(\d+(?:\.\d+)?)\s*$", re.IGNORECASE)
@@ -257,7 +285,8 @@ def oncology_medicines(lines: list[str]) -> list[dict[str, str]]:
 				medicine["huong_dan"] = instruction
 				break
 		medicines.append(medicine)
-	return medicines or legacy_medicines(lines)
+	fallback = numbered_medicines(lines)
+	return fallback if len(fallback) > len(medicines) else medicines or legacy_medicines(lines)
 
 
 def is_non_medicine_label(line: str) -> bool:
@@ -268,9 +297,38 @@ def is_quantity_only(line: str) -> bool:
 	return bool(re.fullmatch(r"\s*\d*\s*(?:vien|viên|goi|gói|ong|ống|chai)\s*", line, re.IGNORECASE))
 
 
+def split_medicine_strength(medicines: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	pattern = re.compile(r"^(.*?)\s+(\d+(?:[.,]\d+)?)\s*(mg|mcg|ml|mui|g|%)\s*(?:\([^)]*\))?\s*$", re.IGNORECASE)
+	for medicine in medicines:
+		if medicine.get("lieu_luong") or not medicine.get("ten"):
+			continue
+		name = normalize_medicine_name(str(medicine["ten"]))
+		match = pattern.match(name)
+		if match and match.group(1).strip():
+			medicine["ten"] = match.group(1).strip()
+			medicine["lieu_luong"] = f"{match.group(2)} {match.group(3)}"
+		else:
+			medicine["ten"] = name
+	return medicines
+
+
+def normalize_medicine_name(value: str) -> str:
+	name = normalize_text(value).strip(" .:-_#")
+	name = re.sub(r"\s+(?:viên|vien|gói|goi|lọ|lo|tuýp|tuyp|ống|ong)\s*$", "", name, flags=re.IGNORECASE)
+	name = re.sub(r"\s+Eff\s*$", "", name, flags=re.IGNORECASE)
+	corrections = {
+		"CETERIN": "CETIRIZINE",
+		"MEXIUM": "NEXIUM",
+		"EFERALGAN": "EFFERALGAN",
+	}
+	for source, target in corrections.items():
+		name = re.sub(rf"\b{source}\b", target, name, flags=re.IGNORECASE)
+	return name
+
+
 def outpatient_medicines(lines: list[str]) -> list[dict[str, str]]:
 	medicines: list[dict[str, str]] = []
-	quantity_units = r"mg|ml|mcg|g|viên|vien|vién|gói|goi|ống|Óng|ong|chai"
+	quantity_units = r"mg|ml|mcg|g|viên|vien|vién|gói|goi|ống|Óng|ong|chai|lọ|lo|tuýp|tuyp"
 	quantity_value = re.compile(rf"^\s*\d+(?:\.\d+)?\s+(?:{quantity_units})\s*$", re.IGNORECASE)
 	inline_medicine = re.compile(rf"^\s*(?:\d+\s*[-.)]?\s*)?(.+?)\s+(?:Số lượng|SL)\s*:?\s*(\d+(?:\.\d+)?\s+(?:{quantity_units}))\s*$", re.IGNORECASE)
 	start = next((index for index, line in enumerate(lines) if re.search(r"Điều trị|Dieu tri", line, re.IGNORECASE)), 0)
@@ -355,6 +413,6 @@ def extract_prescription(lines: list[str], image_path: Path) -> dict[str, Any]:
 		"gioi_tinh": field_from_text(raw_text, ("Giới tính", "Gioi tinh", "Giới tinh"), field_stops) or find_pattern(raw_text, r"\((Nam|Nữ|Nu)\)" ) or next((line for line in lines if re.fullmatch(r"\s*(?:Nam|Nữ|Nu)\s*", line, re.IGNORECASE)), None),
 		"dia_chi": clean_address(last_field_from_text(raw_text, ("Địa chỉ", "Địa chi", "Dia chi", "Dia chỉ"), field_stops) or value_near_label(lines, ("Dia chi", "Dia chỉ", "Địa chỉ", "Địa chi"))),
 		"chan_doan": clean_diagnosis(field_from_text(raw_text, ("Chẩn đoán", "Chẩn doán", "Chan doan", "Chan đoán", "Căn bệnh", "Can bénh"), ("Điều trị", "II. ĐƠN THUỐC", "II. ĐƠN THUỐC")) or diagnosis_near_label(lines)),
-		"thuoc": extract_medicines(lines),
+		"thuoc": split_medicine_strength(extract_medicines(lines)),
 		"van_ban_ocr": raw_text,
 	}

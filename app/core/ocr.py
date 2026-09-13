@@ -15,16 +15,25 @@ pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
 def recognize_image(image_path: Path) -> dict[str, Any]:
 	image = preprocess_image(image_path)
-	ocr_data = pytesseract.image_to_data(image, lang="vie+eng", config=TESSERACT_CONFIG, output_type=pytesseract.Output.DICT)
-	data = _parse_ocr_data(ocr_data, image_path)
-	fallback_data = pytesseract.image_to_data(image, lang="vie+eng", config=TESSERACT_FALLBACK_CONFIG, output_type=pytesseract.Output.DICT)
-	fallback = _parse_ocr_data(fallback_data, image_path)
-	for key, value in data.items():
-		if value in (None, [], "") and fallback.get(key) not in (None, [], ""):
-			data[key] = fallback[key]
-	if len(fallback["thuoc"]) > len(data["thuoc"]):
-		data["thuoc"] = fallback["thuoc"]
-	return data
+	candidates = []
+	for config in (TESSERACT_CONFIG, TESSERACT_FALLBACK_CONFIG, "--psm 11"):
+		ocr_data = pytesseract.image_to_data(image, lang="vie+eng", config=config, output_type=pytesseract.Output.DICT)
+		candidates.append(_parse_ocr_data(ocr_data, image_path))
+	best = max(candidates, key=_candidate_score)
+	for candidate in candidates:
+		for key, value in best.items():
+			if value in (None, [], "") and candidate.get(key) not in (None, [], ""):
+				best[key] = candidate[key]
+	return best
+
+
+def _candidate_score(candidate: dict[str, Any]) -> tuple[int, float, int]:
+	ocr = candidate.get("ocr", {})
+	return (
+		len(candidate.get("thuoc", [])),
+		float(ocr.get("do_tin_cay_trung_binh") or 0),
+		len(candidate.get("van_ban_ocr", "")),
+	)
 
 
 def _parse_ocr_data(ocr_data: dict[str, list[Any]], image_path: Path) -> dict[str, Any]:

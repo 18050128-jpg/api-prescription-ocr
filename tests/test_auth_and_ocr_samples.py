@@ -77,7 +77,7 @@ def test_change_password_rejects_wrong_current_password():
     assert "Mat khau hien tai khong dung." in response.json()["detail"]
 
 
-def test_ocr_route_accepts_valid_image_and_persists_result(monkeypatch):
+def test_ocr_route_accepts_valid_image_and_persists_result(monkeypatch, tmp_path):
     username = "sample_ocr_user"
     token = _register_user(username, f"{username}@example.com", "StrongPass123")
 
@@ -102,9 +102,11 @@ def test_ocr_route_accepts_valid_image_and_persists_result(monkeypatch):
         },
     )
 
+    stored_image = tmp_path / "prescription_test.png"
+    stored_image.write_bytes(b"fake-image-bytes")
     monkeypatch.setattr(
         "app.api.routes.prescriptions.store_uploaded_image",
-        lambda content, filename: (Path("/tmp/prescription_test.png"), "prescription_test.png"),
+        lambda content, filename: (stored_image, "prescription_test.png"),
     )
     monkeypatch.setattr("app.api.routes.prescriptions.process_prescription", lambda content, filename: fake_result)
     monkeypatch.setattr(

@@ -2,7 +2,19 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 .env
 .env.*
 app/uploads/*
 !app/uploads/.gitkeep
+
+# local runtime folders
+.pyc
+pyo
+pyd
+*.egg-info/
+.idea/
+.vscode/

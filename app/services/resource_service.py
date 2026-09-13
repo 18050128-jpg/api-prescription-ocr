@@ -78,7 +78,8 @@ def duplicate_medicine_warnings(medicines: list[dict[str, Any]]) -> list[str]:
 	for key, count in counts.items():
 		if count > 1:
 			other_names = [name for name in variants[key] if name != seen[key]]
-			variant_text = f' (cách ghi khác: {", ".join(f"\"{name}\"" for name in other_names)})' if other_names else ""
+			quoted_names = ", ".join(f'"{name}"' for name in other_names)
+			variant_text = f" (cách ghi khác: {quoted_names})" if other_names else ""
 			warnings.append(f'Thuốc "{seen[key]}"{variant_text} xuất hiện {count} lần trong cùng đơn.')
 	return warnings
 

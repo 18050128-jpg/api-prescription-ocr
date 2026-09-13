@@ -10,19 +10,25 @@ from app.api.routes.users import admin_router, router as users_router
 
 
 app = FastAPI(title="Prescription OCR API", version="0.1.0")
+
+frontend_origins = [
+    origin.strip()
+    for origin in (
+        "http://localhost:5173,"
+        "http://127.0.0.1:5173,"
+        "http://localhost:3000,"
+        "http://127.0.0.1:3000,"
+        + os.getenv("FRONTEND_URL", "")
+    ).split(",")
+    if origin.strip()
+]
+
+# Cho phép cả local và các domain production (Railway, Vercel, Netlify, ...)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        origin.strip()
-        for origin in (
-            "http://localhost:5173,http://127.0.0.1:5173,"
-            "http://localhost:3000,http://127.0.0.1:3000,"
-            + os.getenv("FRONTEND_URL", "")
-        ).split(",")
-        if origin.strip()
-    ],
+    allow_origins=frontend_origins,
     allow_credentials=True,
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=r"https?://([a-zA-Z0-9-]+\.)*(localhost|127\.0\.0\.1|railway\.app)(:\d+)?$|https?://.*\.up\.railway\.app$",
     allow_methods=["*"],
     allow_headers=["*"],
 )
